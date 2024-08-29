@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MatchPlay.Discord": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
