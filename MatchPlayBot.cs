@@ -35,7 +35,6 @@ namespace MatchPlay.Discord
             await ConnectToDiscord();
             await ConnectToMatchPlay();
 
-
             exitEvent.WaitOne();
         }
 

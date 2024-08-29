@@ -1,4 +1,5 @@
 ﻿using MatchPlay.Discord;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 Console.WriteLine("Starting MatchPlay Discord Bot");
@@ -8,12 +9,16 @@ using var factory = LoggerFactory.Create(builder =>
     builder
         .AddFilter("Microsoft", LogLevel.Warning)
         .AddFilter("System", LogLevel.Warning)
-        .AddFilter("LoggingConsoleApp.Program", LogLevel.Debug)
+        .AddFilter("MatchPlay.Discord.Program", LogLevel.Debug)
         .AddConsole();
 
 });
 var logger = factory.CreateLogger<MatchPlayBot>();
 
-var matchPlayBot = new MatchPlayBot(logger, "");
+var builder = new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+IConfiguration config = builder.Build();
+
+var matchPlayBot = new MatchPlayBot(logger, config["Discord:Token"]);
 
 await matchPlayBot.Run();
