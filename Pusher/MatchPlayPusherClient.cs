@@ -13,6 +13,8 @@ namespace MatchPlay.Discord.Pusher
 
         private WebsocketClient client = new WebsocketClient(url);
 
+        public event EventHandler<TournamentEventEventArgs> TournamentEventReceived;
+
         public MatchPlayPusherClient(ILogger logger)
         {
             _logger = logger;
@@ -25,15 +27,32 @@ namespace MatchPlay.Discord.Pusher
             client.ReconnectionHappened.Subscribe(info =>
                 _logger.LogDebug($"Reconnection happened, type: {info.Type}"));
 
-            client.MessageReceived.Subscribe(msg => Console.WriteLine($"Message received: {msg}"));
+            client.MessageReceived.Subscribe(msg => _logger.LogDebug($"Message received: {msg}"));
 
             client.MessageReceived
                   .Where(msg => msg.Text == new Ping().ToJson())
                   .Subscribe(pong =>
                   {
-                      Console.WriteLine("Sending: Pong");
+                      _logger.LogDebug("Sending: Pong");
                       client.Send(new Pong().ToJson());
                   });
+
+            client.MessageReceived
+                .Where(msg => msg.Text.Contains("event"))
+                .Subscribe(msg =>
+                {
+                    var message = JsonSerializer.Deserialize<TournamentEventMessage>(msg.Text);
+                    var eventType = message?.@event.Split("\\\\").LastOrDefault();
+
+                    if (message != null && eventType != null && Enum.IsDefined(typeof(TournamentEvents), eventType))
+                    {
+                        // if message.@event ends with a TournamentEvents enum value, set tournamentEvent to that value
+                        var tournamentEvent = (TournamentEvents)Enum.Parse(typeof(TournamentEvents), eventType);                
+
+                        TournamentEventReceived?.Invoke(this, new TournamentEventEventArgs(tournamentEvent, message.data));
+                    }
+                });
+
 
             await client.Start();
         }

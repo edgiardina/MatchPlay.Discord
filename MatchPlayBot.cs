@@ -2,6 +2,7 @@
 using DSharpPlus.SlashCommands;
 using MatchPlay.Discord.Discord;
 using MatchPlay.Discord.Pusher;
+using MatchPlay.Discord.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reactive.Linq;
@@ -18,6 +19,7 @@ namespace MatchPlay.Discord
 
         private DiscordClient discordClient;
         private MatchPlayPusherClient matchPlayPusherClient;
+        private readonly TournamentSubscriptionService tournamentSubscriptionService = new TournamentSubscriptionService();
 
 
         public MatchPlayBot(ILogger<MatchPlayBot> logger, string discordToken)
@@ -56,13 +58,45 @@ namespace MatchPlay.Discord
             });
             slashCommands.RegisterCommands<MatchPlaySlashCommand>();
 
+            // TODO: have matchplay slash command invoke MatchPlayPusherClient Events
+
             await discordClient.ConnectAsync();
         }
 
         private async Task ConnectToMatchPlay()
         {
             matchPlayPusherClient = new MatchPlayPusherClient(_logger);
+
+            matchPlayPusherClient.TournamentEventReceived += TournamentEventReceived;
+
             await matchPlayPusherClient.Connect();
+
+            // on startup, pull all tournaments and send matchPlay subscribe message for each
+            var subscriptions = tournamentSubscriptionService.GetAllActiveSubscriptions();
+            foreach (var subscription in subscriptions)
+            {
+                await matchPlayPusherClient.SubscribeToTournament(subscription.TournamentId);
+            }
+        }
+
+        private void TournamentEventReceived(object sender, TournamentEventEventArgs e)
+        {
+            _logger.LogInformation($"Received tournament event: {e.TournamentEvent}");
+
+            if (e.TournamentEvent == TournamentEvents.RoundCreatedOrUpdated)
+            {
+                // TODO: Parse data into data object
+
+                // check for subscription, if one exists, send message to Discord
+                var subscription = tournamentSubscriptionService.GetSubscriptionForTournament(1);
+                if (subscription != null)
+                {
+                    // send message to Discord
+                    _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
+                    discordClient.GetChannelAsync(subscription.DiscordChannelId).Result.SendMessageAsync($"Tournament event: {e.TournamentEvent}");
+                }
+            }
         }
     }
 }
+
