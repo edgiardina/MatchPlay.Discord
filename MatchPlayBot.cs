@@ -91,26 +91,32 @@ namespace MatchPlay.Discord
 
             if (e.TournamentEvent == TournamentEvents.RoundCreatedOrUpdated)
             {
-
-                JsonSerializerOptions options = new JsonSerializerOptions();
-                options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
-
-                // TODO: Parse data into data object
-                var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString(), options);
-
-                // check for subscription, if one exists, send message to Discord
-                var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(data.TournamentId);
-                if (subscriptions != null)
+                try
                 {
-                    foreach (var subscription in subscriptions)
+
+                    JsonSerializerOptions options = new JsonSerializerOptions();
+                    options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+
+                    var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString(), options);
+
+                    // check for subscription, if one exists, send message to Discord
+                    var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(data.TournamentId);
+                    if (subscriptions != null)
                     {
-                        // send message to Discord
-                        _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
-                        await discordClient.GetChannelAsync(subscription.DiscordChannelId).Result.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
+                        foreach (var subscription in subscriptions)
+                        {
+                            // send message to Discord
+                            _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
+                            var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
+                            await channel.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
+                        }
                     }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing tournament event");
                 }
             }
         }
     }
 }
-
