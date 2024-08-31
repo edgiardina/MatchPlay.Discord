@@ -91,12 +91,15 @@ namespace MatchPlay.Discord
                 var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString());
 
                 // check for subscription, if one exists, send message to Discord
-                var subscription = await matchPlaySubscriptionService.GetTournamentSubscriptionAsync(data.TournamentId);
-                if (subscription != null)
+                var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(data.TournamentId);
+                if (subscriptions != null)
                 {
-                    // send message to Discord
-                    _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
-                    await discordClient.GetChannelAsync(subscription.DiscordChannelId).Result.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
+                    foreach (var subscription in subscriptions)
+                    {
+                        // send message to Discord
+                        _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
+                        await discordClient.GetChannelAsync(subscription.DiscordChannelId).Result.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
+                    }
                 }
             }
         }

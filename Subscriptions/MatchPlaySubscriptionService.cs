@@ -48,9 +48,9 @@ namespace MatchPlay.Discord.Subscriptions
             }
         }
 
-        public async Task<TournamentSubscription> GetTournamentSubscriptionAsync(long tournamentId)
+        public async Task<List<TournamentSubscription>> GetTournamentSubscriptionsAsync(long tournamentId)
         {
-            return _tournamentSubscriptionService.GetSubscriptionForTournament(tournamentId);
+            return _tournamentSubscriptionService.GetSubscriptionsForTournament(tournamentId);
         }
 
     }

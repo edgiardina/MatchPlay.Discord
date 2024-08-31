@@ -54,11 +54,11 @@ namespace MatchPlay.Discord.Services
             }
         }
 
-        public TournamentSubscription GetSubscriptionForTournament(long tournamentId)
+        public List<TournamentSubscription> GetSubscriptionsForTournament(long tournamentId)
         {
             using (var db = new SQLiteConnection(dbPath))
             {
-                return db.Table<TournamentSubscription>().SingleOrDefault(x => x.TournamentId == tournamentId && x.IsSubscribed);
+                return db.Table<TournamentSubscription>().Where(x => x.TournamentId == tournamentId && x.IsSubscribed).ToList();
             }
         }
 
