@@ -23,9 +23,11 @@ namespace MatchPlay.Discord.Discord
             {
                 await MatchPlaySubscriptionService.UnsubscribeAsync(tournament.Value, ctx.Channel.Id);
             }
+            else
+            {
+                await MatchPlaySubscriptionService.UnsubscribeByChannelAsync(ctx.Channel.Id);
+            }
 
-            // else handle all tournaments
-            
             await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent($"Unsubscribed from tournament {tournament}"));
         }
 

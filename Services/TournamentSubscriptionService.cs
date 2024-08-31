@@ -54,6 +54,20 @@ namespace MatchPlay.Discord.Services
             }
         }
 
+        public void UnsubscribeChannelFromAllTournaments(ulong discordChannelId)
+        {
+            using (var db = new SQLiteConnection(dbPath))
+            {
+                var existingSubscriptions = db.Table<TournamentSubscription>().Where(x => x.DiscordChannelId == discordChannelId).ToList();
+                foreach (var subscription in existingSubscriptions)
+                {
+                    subscription.IsSubscribed = false;
+                    subscription.LastUpdated = DateTime.Now;
+                    db.Update(subscription);
+                }
+            }
+        }
+
         public List<TournamentSubscription> GetSubscriptionsForTournament(long tournamentId)
         {
             using (var db = new SQLiteConnection(dbPath))

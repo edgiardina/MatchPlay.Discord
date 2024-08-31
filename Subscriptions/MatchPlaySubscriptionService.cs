@@ -38,6 +38,18 @@ namespace MatchPlay.Discord.Subscriptions
             await _pusherService.UnsubscribeFromTournament(tournamentId);
         }
 
+        public async Task UnsubscribeByChannelAsync(ulong discordChannelId)
+        {
+            // Unsubscribe from the Pusher channel
+            foreach (var subscription in _tournamentSubscriptionService.GetAllActiveSubscriptions().Where(n => n.DiscordChannelId == discordChannelId))
+            {
+                await _pusherService.UnsubscribeFromTournament(subscription.TournamentId);
+            }
+
+            // Remove the subscription from the Sqlite database
+            _tournamentSubscriptionService.UnsubscribeChannelFromAllTournaments(discordChannelId);
+        }
+
         public async Task ListenToAllActiveSubscriptions()
         {
             var activeSubscriptions = _tournamentSubscriptionService.GetAllActiveSubscriptions();

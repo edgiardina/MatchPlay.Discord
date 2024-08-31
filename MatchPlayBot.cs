@@ -93,7 +93,6 @@ namespace MatchPlay.Discord
             {
                 try
                 {
-
                     JsonSerializerOptions options = new JsonSerializerOptions();
                     options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
 
@@ -109,6 +108,9 @@ namespace MatchPlay.Discord
                             _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
                             var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
                             await channel.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
+
+                            // TODO: craft attractive looking Discord Embed
+
                         }
                     }
                 }
