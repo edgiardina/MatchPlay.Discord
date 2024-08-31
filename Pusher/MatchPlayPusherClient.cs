@@ -42,7 +42,7 @@ namespace MatchPlay.Discord.Pusher
                 .Subscribe(msg =>
                 {
                     var message = JsonSerializer.Deserialize<TournamentEventMessage>(msg.Text);
-                    var eventType = message?.@event.Split("\\\\").LastOrDefault();
+                    var eventType = message?.@event.Split("\\").LastOrDefault();
 
                     if (message != null && eventType != null && Enum.IsDefined(typeof(TournamentEvents), eventType))
                     {

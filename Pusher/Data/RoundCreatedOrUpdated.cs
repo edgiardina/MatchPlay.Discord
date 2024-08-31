@@ -34,9 +34,9 @@ namespace MatchPlay.Discord.Pusher.Data
         public object Duration { get; set; }
 
         [JsonPropertyName("createdAt")]
-        public string CreatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         [JsonPropertyName("completedAt")]
-        public object CompletedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
     }
 }

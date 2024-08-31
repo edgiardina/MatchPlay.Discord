@@ -1,5 +1,6 @@
 ﻿using DSharpPlus;
 using DSharpPlus.SlashCommands;
+using MatchPlay.Discord.Converters;
 using MatchPlay.Discord.Discord;
 using MatchPlay.Discord.Pusher;
 using MatchPlay.Discord.Pusher.Data;
@@ -29,6 +30,7 @@ namespace MatchPlay.Discord
         {
             _logger = logger;
             this.discordToken = discordToken;
+            matchPlayPusherClient = new MatchPlayPusherClient(_logger);
             matchPlaySubscriptionService = new MatchPlaySubscriptionService(new TournamentSubscriptionService(), matchPlayPusherClient);
         }
 
@@ -38,8 +40,8 @@ namespace MatchPlay.Discord
         /// <returns></returns>
         public async Task Run()
         {
-            await ConnectToDiscord();
             await ConnectToMatchPlay();
+            await ConnectToDiscord();
 
             exitEvent.WaitOne();
         }
@@ -47,7 +49,7 @@ namespace MatchPlay.Discord
         private async Task ConnectToDiscord()
         {
             var services = new ServiceCollection()
-                    .AddSingleton<MatchPlaySubscriptionService>()
+                    .AddSingleton(matchPlaySubscriptionService)
                     .BuildServiceProvider();
 
             discordClient = new DiscordClient(new DiscordConfiguration
@@ -68,17 +70,19 @@ namespace MatchPlay.Discord
             };
 
             await discordClient.ConnectAsync();
+
+            _logger.LogInformation("Connected to Discord");
         }
 
         private async Task ConnectToMatchPlay()
         {
-            matchPlayPusherClient = new MatchPlayPusherClient(_logger);
-
             matchPlayPusherClient.TournamentEventReceived += TournamentEventReceived;
 
             await matchPlayPusherClient.Connect();
 
             await matchPlaySubscriptionService.ListenToAllActiveSubscriptions();
+
+            _logger.LogInformation("Connected to MatchPlay and listening to active subscriptions");
         }
 
         private async void TournamentEventReceived(object sender, TournamentEventEventArgs e)
@@ -87,8 +91,12 @@ namespace MatchPlay.Discord
 
             if (e.TournamentEvent == TournamentEvents.RoundCreatedOrUpdated)
             {
+
+                JsonSerializerOptions options = new JsonSerializerOptions();
+                options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+
                 // TODO: Parse data into data object
-                var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString());
+                var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString(), options);
 
                 // check for subscription, if one exists, send message to Discord
                 var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(data.TournamentId);

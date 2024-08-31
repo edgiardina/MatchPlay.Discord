@@ -1,6 +1,8 @@
 ﻿using MatchPlay.Discord;
+using MatchPlay.Discord.Converters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 Console.WriteLine("Starting MatchPlay Discord Bot");
 

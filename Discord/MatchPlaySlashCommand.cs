@@ -9,7 +9,7 @@ namespace MatchPlay.Discord.Discord
         public MatchPlaySubscriptionService MatchPlaySubscriptionService { get; set; }
 
         [SlashCommand("subscribe", "Subscribe to a MatchPlay Tournament")]
-        public async Task Subscribe(InteractionContext ctx, [Option("tournament", "The tournament ID")] long tournament)
+        public async Task Subscribe(InteractionContext ctx, [Option("tournamentID", "The tournament ID")] long tournament)
         {
             await MatchPlaySubscriptionService.SubscribeAsync(tournament, ctx.Channel.Id);
 
@@ -17,7 +17,7 @@ namespace MatchPlay.Discord.Discord
         }
 
         [SlashCommand("unsubscribe", "Unsubscribe from a MatchPlay Tournament")]
-        public async Task Unsubscribe(InteractionContext ctx, [Option("tournament", "The tournament ID")] long? tournament = null)
+        public async Task Unsubscribe(InteractionContext ctx, [Option("tournamentID", "The tournament ID")] long? tournament = null)
         {
             if (tournament != null)
             {
