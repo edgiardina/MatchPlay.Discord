@@ -2,11 +2,13 @@
 using DSharpPlus.SlashCommands;
 using MatchPlay.Discord.Discord;
 using MatchPlay.Discord.Pusher;
+using MatchPlay.Discord.Pusher.Data;
 using MatchPlay.Discord.Services;
 using MatchPlay.Discord.Subscriptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reactive.Linq;
+using System.Text.Json;
 
 namespace MatchPlay.Discord
 {
@@ -20,13 +22,14 @@ namespace MatchPlay.Discord
 
         private DiscordClient discordClient;
         private MatchPlayPusherClient matchPlayPusherClient;
-        private readonly TournamentSubscriptionService tournamentSubscriptionService = new TournamentSubscriptionService();
+        private MatchPlaySubscriptionService matchPlaySubscriptionService;
 
 
         public MatchPlayBot(ILogger<MatchPlayBot> logger, string discordToken)
         {
             _logger = logger;
             this.discordToken = discordToken;
+            matchPlaySubscriptionService = new MatchPlaySubscriptionService(new TournamentSubscriptionService(), matchPlayPusherClient);
         }
 
         /// <summary>
@@ -59,7 +62,10 @@ namespace MatchPlay.Discord
             });
             slashCommands.RegisterCommands<MatchPlaySlashCommand>();
 
-            // TODO: have matchplay slash command invoke MatchPlayPusherClient Events
+            slashCommands.SlashCommandExecuted += async (s, e) =>
+            {
+                _logger.LogInformation($"Slash command executed: {e.Context.CommandName}");
+            };
 
             await discordClient.ConnectAsync();
         }
@@ -72,29 +78,25 @@ namespace MatchPlay.Discord
 
             await matchPlayPusherClient.Connect();
 
-            // on startup, pull all tournaments and send matchPlay subscribe message for each
-            var subscriptions = tournamentSubscriptionService.GetAllActiveSubscriptions();
-            foreach (var subscription in subscriptions)
-            {
-                await matchPlayPusherClient.SubscribeToTournament(subscription.TournamentId);
-            }
+            await matchPlaySubscriptionService.ListenToAllActiveSubscriptions();
         }
 
-        private void TournamentEventReceived(object sender, TournamentEventEventArgs e)
+        private async void TournamentEventReceived(object sender, TournamentEventEventArgs e)
         {
             _logger.LogInformation($"Received tournament event: {e.TournamentEvent}");
 
             if (e.TournamentEvent == TournamentEvents.RoundCreatedOrUpdated)
             {
                 // TODO: Parse data into data object
+                var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString());
 
                 // check for subscription, if one exists, send message to Discord
-                var subscription = tournamentSubscriptionService.GetSubscriptionForTournament(1);
+                var subscription = await matchPlaySubscriptionService.GetTournamentSubscriptionAsync(data.TournamentId);
                 if (subscription != null)
                 {
                     // send message to Discord
                     _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
-                    discordClient.GetChannelAsync(subscription.DiscordChannelId).Result.SendMessageAsync($"Tournament event: {e.TournamentEvent}");
+                    await discordClient.GetChannelAsync(subscription.DiscordChannelId).Result.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
                 }
             }
         }

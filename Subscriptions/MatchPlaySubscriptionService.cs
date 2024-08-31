@@ -38,5 +38,20 @@ namespace MatchPlay.Discord.Subscriptions
             await _pusherService.UnsubscribeFromTournament(tournamentId);
         }
 
+        public async Task ListenToAllActiveSubscriptions()
+        {
+            var activeSubscriptions = _tournamentSubscriptionService.GetAllActiveSubscriptions();
+
+            foreach (var subscription in activeSubscriptions)
+            {
+                await _pusherService.SubscribeToTournament(subscription.TournamentId);
+            }
+        }
+
+        public async Task<TournamentSubscription> GetTournamentSubscriptionAsync(long tournamentId)
+        {
+            return _tournamentSubscriptionService.GetSubscriptionForTournament(tournamentId);
+        }
+
     }
 }

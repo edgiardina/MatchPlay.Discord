@@ -54,7 +54,7 @@ namespace MatchPlay.Discord.Services
             }
         }
 
-        public TournamentSubscription GetSubscriptionForTournament(int tournamentId)
+        public TournamentSubscription GetSubscriptionForTournament(long tournamentId)
         {
             using (var db = new SQLiteConnection(dbPath))
             {
