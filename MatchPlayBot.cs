@@ -3,6 +3,7 @@ using DSharpPlus.SlashCommands;
 using MatchPlay.Discord.Discord;
 using MatchPlay.Discord.Pusher;
 using MatchPlay.Discord.Services;
+using MatchPlay.Discord.Subscriptions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reactive.Linq;
@@ -43,7 +44,7 @@ namespace MatchPlay.Discord
         private async Task ConnectToDiscord()
         {
             var services = new ServiceCollection()
-                    .AddSingleton(matchPlayPusherClient)
+                    .AddSingleton<MatchPlaySubscriptionService>()
                     .BuildServiceProvider();
 
             discordClient = new DiscordClient(new DiscordConfiguration

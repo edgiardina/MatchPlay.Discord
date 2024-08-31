@@ -11,7 +11,7 @@ namespace MatchPlay.Discord.Subscriptions
     {
         [PrimaryKey, AutoIncrement]
         public int ID { get; set; }
-        public int TournamentId { get; set; }
+        public long TournamentId { get; set; }
         public ulong DiscordChannelId { get; set; }
         public bool IsSubscribed { get; set; }
         public DateTime LastUpdated { get; set; }

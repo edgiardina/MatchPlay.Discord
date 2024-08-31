@@ -16,7 +16,8 @@ using var factory = LoggerFactory.Create(builder =>
 var logger = factory.CreateLogger<MatchPlayBot>();
 
 var builder = new ConfigurationBuilder()
-        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddUserSecrets<Program>();
 IConfiguration config = builder.Build();
 
 var matchPlayBot = new MatchPlayBot(logger, config["Discord:Token"]);

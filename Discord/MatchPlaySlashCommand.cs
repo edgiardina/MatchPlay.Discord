@@ -1,28 +1,27 @@
 ﻿using DSharpPlus.SlashCommands;
-using MatchPlay.Discord.Pusher;
+using MatchPlay.Discord.Subscriptions;
 
 namespace MatchPlay.Discord.Discord
 {
     [SlashCommandGroup("matchplay", "MatchPlay Tournament Subscriptions")]
     public class MatchPlaySlashCommand : ApplicationCommandModule
     {
-        public event EventHandler<SubscribeToTournamentEventArgs> SubscribeToTournament;
-        public event EventHandler<SubscribeToTournamentEventArgs> UnsubscribeFromTournament;
+        public MatchPlaySubscriptionService MatchPlaySubscriptionService { get; set; }
 
         [SlashCommand("subscribe", "Subscribe to a MatchPlay Tournament")]
-        public async Task Subscribe(InteractionContext ctx, [Option("tournament", "The tournament ID")] int tournament)
+        public async Task Subscribe(InteractionContext ctx, [Option("tournament", "The tournament ID")] long tournament)
         {
-            SubscribeToTournament?.Invoke(this, new SubscribeToTournamentEventArgs(tournament));
+            await MatchPlaySubscriptionService.SubscribeAsync(tournament, ctx.Channel.Id);
 
             await ctx.CreateResponseAsync(DSharpPlus.InteractionResponseType.ChannelMessageWithSource, new DSharpPlus.Entities.DiscordInteractionResponseBuilder().WithContent($"Subscribed to tournament {tournament}"));
         }
 
         [SlashCommand("unsubscribe", "Unsubscribe from a MatchPlay Tournament")]
-        public async Task Unsubscribe(InteractionContext ctx, [Option("tournament", "The tournament ID")] int? tournament = null)
+        public async Task Unsubscribe(InteractionContext ctx, [Option("tournament", "The tournament ID")] long? tournament = null)
         {
             if (tournament != null)
             {
-                UnsubscribeFromTournament?.Invoke(this, new SubscribeToTournamentEventArgs(tournament.Value)); 
+                await MatchPlaySubscriptionService.UnsubscribeAsync(tournament.Value, ctx.Channel.Id);
             }
 
             // else handle all tournaments

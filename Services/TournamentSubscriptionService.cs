@@ -15,7 +15,7 @@ namespace MatchPlay.Discord.Services
             }            
         }
 
-        public void SubscribeToTournament(int tournamentId, ulong discordChannelId)
+        public void SubscribeToTournament(long tournamentId, ulong discordChannelId)
         {
             using (var db = new SQLiteConnection(dbPath))
             {
@@ -40,7 +40,7 @@ namespace MatchPlay.Discord.Services
             }
         }
 
-        public void UnsubscribeFromTournament(int tournamentId, ulong discordChannelId)
+        public void UnsubscribeFromTournament(long tournamentId, ulong discordChannelId)
         {
             using (var db = new SQLiteConnection(dbPath))
             {

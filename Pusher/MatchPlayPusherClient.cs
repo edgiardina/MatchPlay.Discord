@@ -62,14 +62,14 @@ namespace MatchPlay.Discord.Pusher
             client.Dispose();
         }
 
-        public async Task SubscribeToTournament(int tournamentId)
+        public async Task SubscribeToTournament(long tournamentId)
         {
             var subscribe = new Subscribe { data = new Channel { channel = $"tournaments.{tournamentId}" } };
 
             client.Send(JsonSerializer.Serialize(subscribe));
         }
 
-        public async Task UnsubscribeFromTournament(int tournamentId)
+        public async Task UnsubscribeFromTournament(long tournamentId)
         {
             var unsubscribe = new Unsubscribe { data = new Channel { channel = $"tournaments.{tournamentId}" } };
 
