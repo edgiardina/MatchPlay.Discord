@@ -19,19 +19,17 @@ namespace MatchPlay.Discord
 
 
         ILogger<MatchPlayBot> _logger;
-        private string discordToken;
 
         private DiscordClient discordClient;
         private MatchPlayPusherClient matchPlayPusherClient;
         private MatchPlaySubscriptionService matchPlaySubscriptionService;
 
-
-        public MatchPlayBot(ILogger<MatchPlayBot> logger, string discordToken)
+        public MatchPlayBot(MatchPlayPusherClient pusherClient, MatchPlaySubscriptionService subscriptionService, DiscordClient discordClient, ILogger<MatchPlayBot> logger)
         {
             _logger = logger;
-            this.discordToken = discordToken;
-            matchPlayPusherClient = new MatchPlayPusherClient(_logger);
-            matchPlaySubscriptionService = new MatchPlaySubscriptionService(new TournamentSubscriptionService(), matchPlayPusherClient);
+            this.discordClient = discordClient;
+            matchPlayPusherClient = pusherClient;
+            matchPlaySubscriptionService = subscriptionService;
         }
 
         /// <summary>
@@ -48,20 +46,8 @@ namespace MatchPlay.Discord
 
         private async Task ConnectToDiscord()
         {
-            var services = new ServiceCollection()
-                    .AddSingleton(matchPlaySubscriptionService)
-                    .BuildServiceProvider();
+            var slashCommands = discordClient.GetSlashCommands();
 
-            discordClient = new DiscordClient(new DiscordConfiguration
-            {
-                Token = this.discordToken,
-                TokenType = TokenType.Bot
-            });
-
-            var slashCommands = discordClient.UseSlashCommands(new SlashCommandsConfiguration
-            {
-                Services = services
-            });
             slashCommands.RegisterCommands<MatchPlaySlashCommand>();
 
             slashCommands.SlashCommandExecuted += async (s, e) =>

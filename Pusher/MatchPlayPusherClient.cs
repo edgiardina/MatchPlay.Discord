@@ -15,7 +15,7 @@ namespace MatchPlay.Discord.Pusher
 
         public event EventHandler<TournamentEventEventArgs> TournamentEventReceived;
 
-        public MatchPlayPusherClient(ILogger logger)
+        public MatchPlayPusherClient(ILogger<MatchPlayPusherClient> logger)
         {
             _logger = logger;
 
