@@ -11,10 +11,10 @@ using PinballApi;
 
 Console.WriteLine("Starting MatchPlay Discord Bot");
 
-var builder = new ConfigurationBuilder()
+var config = new ConfigurationBuilder()
         .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-        .AddUserSecrets<Program>();
-IConfiguration config = builder.Build();
+        .AddUserSecrets<Program>()
+        .Build();
 
 var services = new ServiceCollection()
                 .AddLogging(options =>
