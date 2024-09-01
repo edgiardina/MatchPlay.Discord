@@ -75,61 +75,69 @@ namespace MatchPlay.Discord
         {
             _logger.LogInformation($"Received tournament event: {e.TournamentEvent}");
 
-            if (e.TournamentEvent == TournamentEvents.RoundCreatedOrUpdated)
+            JsonSerializerOptions options = new JsonSerializerOptions();
+            options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+
+            switch (e.TournamentEvent)
             {
-                try
+                case TournamentEvents.RoundCreatedOrUpdated:
+                    var roundCreatedOrUpdated = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString(), options);
+                    await RoundCreatedOrUpdated(roundCreatedOrUpdated);
+                    break;
+            }
+        }
+
+        private async Task RoundCreatedOrUpdated(RoundCreatedOrUpdated roundCreatedOrUpdated)
+        {
+            _logger.LogInformation($"Round created or updated: {roundCreatedOrUpdated.Name}");
+
+            try
+            {
+                // check for subscription, if one exists, send message to Discord
+                var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(roundCreatedOrUpdated.TournamentId);
+                if (subscriptions != null)
                 {
-                    JsonSerializerOptions options = new JsonSerializerOptions();
-                    options.Converters.Add(new DateTimeConverterUsingDateTimeParse());
+                    // Look up details from MatchPlay API
+                    var tournament = await matchPlayApi.GetTournament((int)roundCreatedOrUpdated.TournamentId, includeArenas: true);
 
-                    var data = JsonSerializer.Deserialize<RoundCreatedOrUpdated>(e.Data.ToString(), options);
+                    var games = await matchPlayApi.GetGames(new List<int> { (int)roundCreatedOrUpdated.TournamentId }, round: (int)roundCreatedOrUpdated.RoundId);
 
-                    // check for subscription, if one exists, send message to Discord
-                    var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(data.TournamentId);
-                    if (subscriptions != null)
+                    if (games != null)
                     {
-                        // Look up details from MatchPlay API
-                        var tournament = await matchPlayApi.GetTournament((int)data.TournamentId, includeArenas: true);
+                        // TODO: craft attractive looking Discord Embed
+                        var embed = new DiscordEmbedBuilder()
+                            .WithTitle($"{tournament.Name} - {roundCreatedOrUpdated.Name}")
+                            .WithDescription($"{roundCreatedOrUpdated.Name} in tournament {tournament.Name} has been created or updated")
+                            .WithColor(DiscordColor.Green);
 
-                        var games = await matchPlayApi.GetGames(new List<int>{ (int)data.TournamentId }, round: (int)data.RoundId);
-
-                        if (games != null)
+                        foreach (var match in games)
                         {
-                            // TODO: craft attractive looking Discord Embed
-                            var embed = new DiscordEmbedBuilder()
-                                .WithTitle($"{tournament.Name} - {data.Name}")
-                                .WithDescription($"{data.Name} in tournament {tournament.Name} has been created or updated")
-                                .WithColor(DiscordColor.Green);
-                           
-                            foreach (var match in games)
-                            {
-                                // TODO: look up game and get game name
-                                var game = await matchPlayApi.GetGame((int)data.TournamentId, match.GameId);                                
+                            // TODO: look up game and get game name
+                            var game = await matchPlayApi.GetGame((int)roundCreatedOrUpdated.TournamentId, match.GameId);
 
-                                var playerString = String.Join("\n", game.PlayerIds.Select(n => tournament.Players.SingleOrDefault(m => m.PlayerId == n)?.Name ?? n.ToString()));
+                            var playerString = String.Join("\n", game.PlayerIds.Select(n => tournament.Players.SingleOrDefault(m => m.PlayerId == n)?.Name ?? n.ToString()));
 
-                                embed.AddField(game.Arena?.Name ?? "No Arena", playerString);
-                            }                            
-
-                            // Send embed to channels subscribed to this tournament
-                            foreach (var subscription in subscriptions)
-                            {
-                                // send message to Discord
-                                _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
-                                var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
-                                await channel.SendMessageAsync(embed);
-                            }
+                            embed.AddField(game.Arena?.Name ?? "No Arena", playerString);
                         }
-                        else
+
+                        // Send embed to channels subscribed to this tournament
+                        foreach (var subscription in subscriptions)
                         {
-                            _logger.LogWarning($"Round {data.RoundId} has no games for tournament {data.TournamentId}");
+                            // send message to Discord
+                            _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
+                            var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
+                            await channel.SendMessageAsync(embed);
                         }
                     }
+                    else
+                    {
+                        _logger.LogWarning($"Round {roundCreatedOrUpdated.RoundId} has no games for tournament {roundCreatedOrUpdated.TournamentId}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error processing tournament event");
-                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing tournament event");
             }
         }
     }
