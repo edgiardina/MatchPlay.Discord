@@ -1,4 +1,5 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.SlashCommands;
 using MatchPlay.Discord.Converters;
 using MatchPlay.Discord.Discord;
@@ -88,16 +89,40 @@ namespace MatchPlay.Discord
                     if (subscriptions != null)
                     {
                         // Look up details from MatchPlay API
+                        var tournament = await matchPlayApi.GetTournament((int)data.TournamentId);
 
-                        // TODO: craft attractive looking Discord Embed
+                        var games = await matchPlayApi.GetGames(new List<int>{ (int)data.TournamentId }, round: (int)data.RoundId);
 
-                        // Send embed to channels subscribed to this tournament
-                        foreach (var subscription in subscriptions)
+                        if (games != null)
                         {
-                            // send message to Discord
-                            _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
-                            var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
-                            await channel.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");                         
+                            // TODO: craft attractive looking Discord Embed
+                            var embed = new DiscordEmbedBuilder()
+                                .WithTitle($"{tournament.Name} - {data.Name}")
+                                .WithDescription($"{data.Name} in tournament {tournament.Name} has been created or updated")
+                                .WithColor(DiscordColor.Green);
+                           
+                            foreach (var match in games)
+                            {
+                                // TODO: look up game and get game name
+                                var game = await matchPlayApi.GetGame((int)data.TournamentId, match.GameId);                                
+
+                                var playerString = String.Join("\n", game.PlayerIds);
+
+                                embed.AddField(match.Arena?.Name ?? "No Arena", playerString);
+                            }                            
+
+                            // Send embed to channels subscribed to this tournament
+                            foreach (var subscription in subscriptions)
+                            {
+                                // send message to Discord
+                                _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
+                                var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
+                                await channel.SendMessageAsync(embed);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning($"Round {data.RoundId} has no games for tournament {data.TournamentId}");
                         }
                     }
                 }
