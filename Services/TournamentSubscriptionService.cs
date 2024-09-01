@@ -1,4 +1,4 @@
-﻿using MatchPlay.Discord.Subscriptions;
+﻿using MatchPlay.Discord.Subscriptions.Models;
 using SQLite;
 
 namespace MatchPlay.Discord.Services

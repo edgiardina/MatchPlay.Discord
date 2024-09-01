@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using SQLite;
 
-namespace MatchPlay.Discord.Subscriptions
+namespace MatchPlay.Discord.Subscriptions.Models
 {
     public class TournamentSubscription
     {

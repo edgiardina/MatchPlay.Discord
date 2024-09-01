@@ -1,5 +1,6 @@
 ﻿using MatchPlay.Discord.Pusher;
 using MatchPlay.Discord.Services;
+using MatchPlay.Discord.Subscriptions.Models;
 
 namespace MatchPlay.Discord.Subscriptions
 {
