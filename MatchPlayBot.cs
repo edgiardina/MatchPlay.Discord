@@ -89,7 +89,7 @@ namespace MatchPlay.Discord
                     if (subscriptions != null)
                     {
                         // Look up details from MatchPlay API
-                        var tournament = await matchPlayApi.GetTournament((int)data.TournamentId);
+                        var tournament = await matchPlayApi.GetTournament((int)data.TournamentId, includeArenas: true);
 
                         var games = await matchPlayApi.GetGames(new List<int>{ (int)data.TournamentId }, round: (int)data.RoundId);
 
@@ -106,7 +106,7 @@ namespace MatchPlay.Discord
                                 // TODO: look up game and get game name
                                 var game = await matchPlayApi.GetGame((int)data.TournamentId, match.GameId);                                
 
-                                var playerString = String.Join("\n", game.PlayerIds.Select(n => tournament.Players.SingleOrDefault(m => m.PlayerId == n).Name));
+                                var playerString = String.Join("\n", game.PlayerIds.Select(n => tournament.Players.SingleOrDefault(m => m.PlayerId == n)?.Name ?? n.ToString()));
 
                                 embed.AddField(game.Arena?.Name ?? "No Arena", playerString);
                             }                            
