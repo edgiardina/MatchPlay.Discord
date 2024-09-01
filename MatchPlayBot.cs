@@ -4,10 +4,9 @@ using MatchPlay.Discord.Converters;
 using MatchPlay.Discord.Discord;
 using MatchPlay.Discord.Pusher;
 using MatchPlay.Discord.Pusher.Data;
-using MatchPlay.Discord.Services;
 using MatchPlay.Discord.Subscriptions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using PinballApi;
 using System.Reactive.Linq;
 using System.Text.Json;
 
@@ -17,19 +16,19 @@ namespace MatchPlay.Discord
     {
         ManualResetEvent exitEvent = new ManualResetEvent(false);
 
+        private readonly ILogger<MatchPlayBot> _logger;
+        private readonly DiscordClient discordClient;
+        private readonly MatchPlayPusherClient matchPlayPusherClient;
+        private readonly MatchPlaySubscriptionService matchPlaySubscriptionService;
+        private readonly MatchPlayApi matchPlayApi;
 
-        ILogger<MatchPlayBot> _logger;
-
-        private DiscordClient discordClient;
-        private MatchPlayPusherClient matchPlayPusherClient;
-        private MatchPlaySubscriptionService matchPlaySubscriptionService;
-
-        public MatchPlayBot(MatchPlayPusherClient pusherClient, MatchPlaySubscriptionService subscriptionService, DiscordClient discordClient, ILogger<MatchPlayBot> logger)
+        public MatchPlayBot(MatchPlayPusherClient pusherClient, MatchPlaySubscriptionService subscriptionService, DiscordClient discordClient, MatchPlayApi matchPlayApi, ILogger<MatchPlayBot> logger)
         {
             _logger = logger;
             this.discordClient = discordClient;
             matchPlayPusherClient = pusherClient;
             matchPlaySubscriptionService = subscriptionService;
+            this.matchPlayApi = matchPlayApi;
         }
 
         /// <summary>
@@ -88,15 +87,17 @@ namespace MatchPlay.Discord
                     var subscriptions = await matchPlaySubscriptionService.GetTournamentSubscriptionsAsync(data.TournamentId);
                     if (subscriptions != null)
                     {
+                        // Look up details from MatchPlay API
+
+                        // TODO: craft attractive looking Discord Embed
+
+                        // Send embed to channels subscribed to this tournament
                         foreach (var subscription in subscriptions)
                         {
                             // send message to Discord
                             _logger.LogInformation($"Sending message to Discord channel {subscription.DiscordChannelId}");
                             var channel = await discordClient.GetChannelAsync(subscription.DiscordChannelId);
-                            await channel.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");
-
-                            // TODO: craft attractive looking Discord Embed
-
+                            await channel.SendMessageAsync($"Tournament event: {e.TournamentEvent} Name {data.Name}");                         
                         }
                     }
                 }

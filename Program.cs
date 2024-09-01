@@ -7,6 +7,7 @@ using MatchPlay.Discord.Subscriptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using PinballApi;
 
 Console.WriteLine("Starting MatchPlay Discord Bot");
 
@@ -40,6 +41,9 @@ var services = new ServiceCollection()
                     return discordClient;
                 })
                 .AddSingleton<TournamentSubscriptionService>()
+                .AddSingleton(serviceProvider => { 
+                    return new MatchPlayApi(config["MatchPlay:MatchPlayApiToken"]);
+                })
                 .BuildServiceProvider();
 
 var matchPlayBot = services.GetRequiredService<MatchPlayBot>();
