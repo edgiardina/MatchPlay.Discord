@@ -106,9 +106,9 @@ namespace MatchPlay.Discord
                                 // TODO: look up game and get game name
                                 var game = await matchPlayApi.GetGame((int)data.TournamentId, match.GameId);                                
 
-                                var playerString = String.Join("\n", game.PlayerIds);
+                                var playerString = String.Join("\n", game.PlayerIds.Select(n => tournament.Players.SingleOrDefault(m => m.PlayerId == n).Name));
 
-                                embed.AddField(match.Arena?.Name ?? "No Arena", playerString);
+                                embed.AddField(game.Arena?.Name ?? "No Arena", playerString);
                             }                            
 
                             // Send embed to channels subscribed to this tournament
